@@ -36,7 +36,7 @@ function udp_server_loop(s, handler)
     end
 end
 
-function  udp_server.udp_server(host, port, handler)
+function udp_server.udp_server(host, port, handler)
     local s = socket('AF_INET', 'SOCK_DGRAM', 'udp')
     if not s then
         return nil -- check errno:strerror()
