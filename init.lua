@@ -6,10 +6,6 @@ local console = require('console')
 local server = require('http.server')
 local resolver = require('resolver')
 local query = require('query')
-local response = require('response')
-local STP = require "StackTracePlus"
-
-debug.traceback = STP.stacktrace
 
 local HOST = '127.0.0.1'
 local PORT = 3311
@@ -32,18 +28,15 @@ end
 
 -------------------------HANDLE REQUEST-------------------------------
 local function handle_message(s, msg)
-    -- local reply = nil
-    -- return reply
 
     local m_query = query()
     m_query:decode(msg, string.len(msg))
     
-    local m_response = response()
-    m_resolver:process(m_query, m_response)
+    local m_response = m_resolver:process(m_query)
 
     local buffer = ""
-    local nbytes, buffer = m_response:code()
-    print("response " .. nbytes .. "byte")
+    local buffer = m_response:code()
+    print("response " .. string.len(buffer) .. "byte")
     return buffer
 end
 
@@ -54,15 +47,22 @@ local function tcp_handler(s, peer)
         if line == nil then
             break -- error or eof
         end
-
-
-        local reply = handle_message(s, line)
-        if reply then
-            print("reply:" .. reply)
-            if not s:write(reply) then
-                print("error writing reply")
+        local t1,t2 = string.byte(line, 1, 2)
+        line = string.sub(line, 3)
+        local size = bit.lshift(t1, 8) + t2
+        if string.len(line) == size then
+            local reply = handle_message(s, line)
+            if reply then
+                reply = string.format("%04x", string.len(reply)) .. reply
+                --local sent = s:syswrite(msg)
+                --print("Sent:" .. sent)
+                if not s:write(reply) then
+                    print("error writing reply")
+                end
             end
         end
+
+        
     end
 end
 
@@ -75,11 +75,9 @@ local function udp_handler(s, peer, msg)
     -- s:writable()
     local reply = handle_message(s, msg)
     if reply then
-        print("reply:" .. reply)
-        s:sendto(peer.host, peer.port, msg)
+        local sent = s:sendto(peer.host, peer.port, reply)
     else
         print("udp reply not found")
-        -- s:sendto(peer.host, peer.port, "nil")
     end
 end
 

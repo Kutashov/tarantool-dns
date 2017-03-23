@@ -1,6 +1,7 @@
 local logger = require('logger')
 local record = require('record')
 local oop = require('oop')
+local response = require('response')
 
 local resolver = oop.class {
 	
@@ -76,7 +77,7 @@ local resolver = oop.class {
 	end,
 
 	find = function(self, address, isIp)
-		if address == '' then
+		if address == "" then
 			return ""
 		end
 
@@ -85,9 +86,8 @@ local resolver = oop.class {
 		local domain = ""
 		local record = self.m_record_list
 		while record do
-
 			if record.ipAddress == address and isIp then
-				domain = record.domain
+				domain = record.domainName
 			elseif record.domainName == address and not isIp then
 				domain = record.ipAddress
 				break
@@ -105,7 +105,8 @@ local resolver = oop.class {
 		return domain
 	end,
 
-	process = function(self, query, response)
+	process = function(self, query)
+		local response = response()
 		logger.trace("Resolver::process()" .. query:asString())
 
 		local qName = query.m_qName
@@ -132,22 +133,15 @@ local resolver = oop.class {
     	print("qName:" .. qName)
 
     	if ipAddress == qName then
-    		print("1")
     		_, _, ip1, ip2, ip3, ip4 = string.find(domainName, "(%d+).(%d+).(%d+).(%d+)")
-    		print("ip1:" .. ip1)
-    		print("ip2:" .. ip2)
-    		print("ip3:" .. ip3)
-    		print("ip4:" .. ip4)
-    		arr = {}
-    		-- arr[1] = tonumber(ip1)
-    		arr[1] = string.byte(ip1)
-        	arr[2] = string.byte(ip2)
-        	arr[3] = string.byte(ip3)
-        	arr[4] = string.byte(ip4)
+    		local arr = {}
+    		arr[1] = string.char(ip1)
+        	arr[2] = string.char(ip2)
+        	arr[3] = string.char(ip3)
+        	arr[4] = string.char(ip4)
 
         	response.m_raddr = arr
     	else
-    		print("2")
     		response.m_rdata = domainName
     	end
 
@@ -162,17 +156,19 @@ local resolver = oop.class {
     		if ipAddress == qName then
     			response.m_rdLength = 4
     		else
-    			response.m_rdLength = string.len(domainName) + 1 -- + initial label length
+    			response.m_rdLength = string.len(domainName) + 2 -- + initial label length + end dot
     		end
 
     		print(response:asString())
     	end
 
     	logger.trace("Resolver::process()" .. response:asString())
+
+    	return response
 	end,
 
 	convert = function(self, qName)
-		if not string.find(qName, ".in-addr.arpa") then
+		if not string.find(qName, ".in-addr.arpa", 1, true) then
 			return ""
 		end
 

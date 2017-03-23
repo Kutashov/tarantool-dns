@@ -50,7 +50,7 @@ local response = oop.subclass(message) {
   
     	buffer = self:put16bits(buffer, self.m_type)
     	buffer = self:put16bits(buffer, self.m_class)
-
+    	
     	-- Code Answer section
     	buffer = self:code_domain(buffer, self.m_name)
     	buffer = self:put16bits(buffer, self.m_type)
@@ -58,30 +58,26 @@ local response = oop.subclass(message) {
     	buffer = self:put32bits(buffer, self.m_ttl)
     	buffer = self:put16bits(buffer, self.m_rdLength)
 
-    	print("mrdata:" .. self.m_rdata)
-    	print("buf length:" .. string.len(buffer))
     	if self.m_rdata == "" then
-    		print("mrdata empty")
     		for i = 1, 4 do
-    			buffer = buffer .. string.char(self.m_raddr[i])
+    			buffer = buffer .. self.m_raddr[i]
     		end
     	else
-    		print("mrdata not empty")
         	buffer = self:code_domain(buffer, self.m_rdata);
     	end
 
 
     	self:log_buffer(buffer, string.len(buffer))
 
-    	return string.len(buffer), buffer
+    	return buffer
     end,
 
     code_domain = function(self, buffer, domain)
 
 		for i in string.gmatch(domain, "[^%.]+") do
-			buffer = buffer .. bit.band(string.len(i), 0xFF) .. i
+			buffer = buffer .. string.char(bit.band(string.len(i), 0xFF)) .. i
 		end
-		return buffer
+		return buffer .. string.char(0)
 	end
 
 }

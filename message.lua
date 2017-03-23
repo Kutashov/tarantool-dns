@@ -69,7 +69,6 @@ local message = oop.class {
 
     	local buffer = ""
         buffer = self:put16bits(buffer, self.m_id)
-
     	local fields = bit.bor(bit.lshift(self.m_qr, 15), bit.lshift(self.m_opcode, 14), self.m_rcode)
     	buffer = self:put16bits(buffer, fields)
 
@@ -77,7 +76,6 @@ local message = oop.class {
     	buffer = self:put16bits(buffer, self.m_anCount)
     	buffer = self:put16bits(buffer, self.m_nsCount)
     	buffer = self:put16bits(buffer, self.m_arCount)
-
         return buffer
     end,
 
@@ -90,9 +88,9 @@ local message = oop.class {
 
 		for i = 1, size do
   			if (i % 10) == 1 then
-  				text = text .. "\n" .. string.format("%02d", i) .. ": "
+  				text = text .. "\n" .. string.format("%02d", i) .. ":"
   			end
-  			text = text .. string.format(" %02X", string.byte(buffer:sub(i,i))) -- string.byte("A")
+  			text = text .. string.format(" %02x", string.byte(buffer:sub(i,i)))
 		end
 
     	text = text .. "\n---------------------------------"
@@ -106,16 +104,15 @@ local message = oop.class {
         return string.sub(buffer, 3), bit.lshift(t1, 8) + t2
     end,
 
-	put16bits = function(self, buffer, value) -- string immutable, need to change functions
-    	return buffer .. bit.rshift(bit.band(value, 0xFF00), 8) .. bit.band(value, 0xFF)
+	put16bits = function(self, buffer, value)
+    	return buffer .. string.char(bit.rshift(bit.band(value, 0xFF00), 8)) .. string.char(bit.band(value, 0xFF))
     end,
 
 	put32bits = function(self, buffer, value)
-
-		return buffer .. bit.rshift(bit.band(value, 0xFF000000), 24)
-						.. bit.rshift(bit.band(value, 0xFF0000), 16)
-						.. bit.rshift(bit.band(value, 0xFF00), 16)
-						.. bit.rshift(bit.band(value, 0xFF), 16)
+		return buffer .. string.char(bit.rshift(bit.band(value, 0xFF000000), 24))
+						.. string.char(bit.rshift(bit.band(value, 0xFF0000), 16))
+						.. string.char(bit.rshift(bit.band(value, 0xFF00), 16))
+						.. string.char(bit.rshift(bit.band(value, 0xFF), 16))
 	end,
     
 }
