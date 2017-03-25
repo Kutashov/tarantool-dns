@@ -34,6 +34,10 @@ local message = oop.class {
     m_nsCount = 0,
     m_arCount = 0,
 
+    m_qName = "",
+    m_qType = 0,
+    m_qClass = 0,
+
     new = function(self, type)
         self.m_qr = type
     end,
@@ -114,6 +118,27 @@ local message = oop.class {
 						.. string.char(bit.rshift(bit.band(value, 0xFF00), 16))
 						.. string.char(bit.rshift(bit.band(value, 0xFF), 16))
 	end,
+
+    decode_qname = function(self, buffer)
+
+        self.m_qName = ""
+        local pos = 1
+        local length = string.byte(buffer:sub(pos, pos))
+        while length ~= 0 do
+            for i = 1, length do
+                pos = pos + 1
+                self.m_qName = self.m_qName .. buffer:sub(pos, pos)                 
+            end
+            pos = pos + 1
+            length = string.byte(buffer:sub(pos, pos))
+            if length ~= 0 then
+                self.m_qName = self.m_qName .. '.'
+            end
+        end
+
+        return string.sub(buffer, pos + 1)
+
+    end,
     
 }
 

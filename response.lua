@@ -14,8 +14,8 @@ local response = oop.subclass(message) {
 	}),
 
 	m_name = 0,
-    m_type = 0,
-    m_class = 0,
+    m_qType = 0,
+    m_qClass = 0,
     m_ttl = 0,
     m_rdLength = 0,
     m_rdata = "",
@@ -28,15 +28,24 @@ local response = oop.subclass(message) {
     asString = function(self)
     	return "\nRESPONSE { " .. self:super() ..
     		"\tname: " .. self.m_name ..
-    		"\n\ttype: " .. self.m_type ..
-    		"\n\tclass: " .. self.m_class ..
+    		"\n\ttype: " .. self.m_qType ..
+    		"\n\tclass: " .. self.m_qClass ..
     		"\n\tttl: " .. self.m_ttl ..
     		"\n\trdLength: " .. self.m_rdLength ..
     		"\n\trdata: " .. self.m_rdata .. " }"
     end,
 
     decode = function(self, buffer, size)
-    	-- Only needed for the DNS client
+    	self:decode_hdr(buffer)
+    	buffer = string.sub(buffer, self.CONSTANTS.HDR_OFFSET + 1)
+
+    	--Question section
+    	buffer = self:decode_qname(buffer)
+    	buffer, self.m_qType = self:get16bits(buffer)
+    	buffer, self.m_qClass = self:get16bits(buffer)
+
+    	--Answer section
+    	
     end,
 
     code = function(self)
@@ -48,13 +57,13 @@ local response = oop.subclass(message) {
     	-- Code Question section
     	buffer = self:code_domain(buffer, self.m_name)
   
-    	buffer = self:put16bits(buffer, self.m_type)
-    	buffer = self:put16bits(buffer, self.m_class)
+    	buffer = self:put16bits(buffer, self.m_qType)
+    	buffer = self:put16bits(buffer, self.m_qClass)
     	
     	-- Code Answer section
     	buffer = self:code_domain(buffer, self.m_name)
-    	buffer = self:put16bits(buffer, self.m_type)
-    	buffer = self:put16bits(buffer, self.m_class)
+    	buffer = self:put16bits(buffer, self.m_qType)
+    	buffer = self:put16bits(buffer, self.m_qClass)
     	buffer = self:put32bits(buffer, self.m_ttl)
     	buffer = self:put16bits(buffer, self.m_rdLength)
 

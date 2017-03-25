@@ -123,8 +123,8 @@ local resolver = oop.class {
 		response.m_qdCount = 1
 		response.m_anCount = 1
 		response.m_name = query.m_qName
-		response.m_type = query.m_qType
-		response.m_class = query.m_qClass
+		response.m_qType = query.m_qType
+		response.m_qClass = query.m_qClass
 
 
     	-- ip ="200.0.255.54";

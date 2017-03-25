@@ -3,10 +3,6 @@ local logger = require('logger')
 local oop = require('oop')
 
 local query = oop.subclass(message) {
-	
-	m_qName = "",
-    m_qType = 0,
-    m_qClass = 0,
 
     new = function(self)
         self:super(self.TYPE.QUERY)
@@ -43,26 +39,6 @@ local query = oop.subclass(message) {
     	buffer, self.m_qClass = self:get16bits(buffer)
 	end,
 
-	decode_qname = function(self, buffer)
-
-    	self.m_qName = ""
-    	local pos = 1
-    	local length = string.byte(buffer:sub(pos, pos))
-    	while length ~= 0 do
-      		for i = 1, length do
-      			pos = pos + 1
-				self.m_qName = self.m_qName .. buffer:sub(pos, pos)      			
-      		end
-      		pos = pos + 1
-      		length = string.byte(buffer:sub(pos, pos))
-      		if length ~= 0 then
-      			self.m_qName = self.m_qName .. '.'
-      		end
-    	end
-
-    	return string.sub(buffer, pos + 1)
-
-	end,
 }
 
 return query
