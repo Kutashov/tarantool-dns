@@ -35,7 +35,9 @@ local response = oop.subclass(message) {
     		"\n\trdata: " .. self.m_rdata .. " }"
     end,
 
-    decode = function(self, buffer, size)
+    decode = function(self, buffer)
+    	self.data = buffer
+
     	self:decode_hdr(buffer)
     	buffer = string.sub(buffer, self.CONSTANTS.HDR_OFFSET + 1)
 
@@ -44,8 +46,38 @@ local response = oop.subclass(message) {
     	buffer, self.m_qType = self:get16bits(buffer)
     	buffer, self.m_qClass = self:get16bits(buffer)
 
+    	local ttl
+    	local min_ttl = 86400 -- one day maximum ttl
+
     	--Answer section
-    	
+    	for i = 1, self.m_anCount do
+    			buffer, ttl = self:read_response_part(buffer)
+    			if ttl < min_ttl then
+    				min_ttl = ttl
+    			end
+    	end
+
+    	--Authority section
+    	for i = 1, self.m_anCount do
+    	end
+
+    	--Additional section
+    	for i = 1, self.m_anCount do
+    	end
+
+    	self.data = ""
+    	return min_ttl
+    end,
+
+    read_response_part = function(self, buffer)
+
+    	local ttl, rdLength
+    	buffer = self:decode_qname(buffer)
+    	buffer, _ = self:get16bits(buffer)
+    	buffer, _ = self:get16bits(buffer)
+    	buffer, ttl = self:get32bits(buffer)
+    	buffer, rdLength = self:get16bits(buffer)
+    	return string.sub(buffer, rdLength + 1), ttl
     end,
 
     code = function(self)

@@ -38,6 +38,8 @@ local message = oop.class {
     m_qType = 0,
     m_qClass = 0,
 
+    data = "", --temp data's field
+
     new = function(self, type)
         self.m_qr = type
     end,
@@ -104,8 +106,14 @@ local message = oop.class {
 
 	get16bits = function(self, buffer) 
 
-		local t1,t2 = string.byte(buffer, 1, 2)
+		local t1, t2 = string.byte(buffer, 1, 2)
         return string.sub(buffer, 3), bit.lshift(t1, 8) + t2
+    end,
+
+    get32bits = function(self, buffer) 
+
+        local t1, t2, t3, t4 = string.byte(buffer, 1, 4)
+        return string.sub(buffer, 5), bit.lshift(t1, 24) + bit.lshift(t2, 16) + bit.lshift(t3, 8) + t4
     end,
 
 	put16bits = function(self, buffer, value)
@@ -123,7 +131,16 @@ local message = oop.class {
 
         self.m_qName = ""
         local pos = 1
+        local result = nil
         local length = string.byte(buffer:sub(pos, pos))
+
+        if length >= 192 then
+            local offset = bit.band(bit.lshift(length, 8) + string.byte(buffer:sub(pos+1, pos+1)), 0x3FFF)
+            result = string.sub(buffer, pos + 2)
+            buffer = string.sub(self.data, offset + 1)
+            length = string.byte(buffer:sub(pos, pos))
+        end
+
         while length ~= 0 do
             for i = 1, length do
                 pos = pos + 1
@@ -136,7 +153,11 @@ local message = oop.class {
             end
         end
 
-        return string.sub(buffer, pos + 1)
+        if result then
+            return result
+        else
+            return string.sub(buffer, pos + 1)
+        end
 
     end,
     

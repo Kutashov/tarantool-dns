@@ -6,6 +6,7 @@ local console = require('console')
 local server = require('http.server')
 local resolver = require('resolver')
 local query = require('query')
+local response = require('response')
 local socket = require('socket')
 local errno = require('errno')
 local expirationd = require('expirationd')
@@ -33,7 +34,7 @@ end
 
 
 local function is_expired(args, tuple) 
-    return tuple[4] < os.time() 
+    return tuple[4] + tuple[5] < os.time() 
 end
 function delete_tuple(space_id, args, tuple)
     box.space[space_id]:delete({tuple[1], tuple[2]}) 
@@ -76,12 +77,14 @@ end
 local function handle_message(s, msg)
 
     local m_query = query()
-    m_query:decode(msg, string.len(msg))
+    m_query:decode(msg)
 
     local record = box.space.records:get{ m_query.m_qName, m_query.m_qType }
     if not record then
         local reply = get_from_google(msg)
-        box.space.records:insert{ m_query.m_qName, m_query.m_qType, reply, os.time() }
+        local m_response = response()
+        local ttl = m_response:decode(reply)
+        box.space.records:insert{ m_query.m_qName, m_query.m_qType, reply, os.time(), ttl }
 
         
         return reply

@@ -24,11 +24,12 @@ local query = oop.subclass(message) {
     	return 0
 	end,
 
-	decode = function(self, buffer, size)
+	decode = function(self, buffer)
 
     	logger.trace("Query::decode()")
+    	self.data = buffer
 
-    	self:log_buffer(buffer, size)
+    	self:log_buffer(buffer, string.len(buffer))
 
     	self:decode_hdr(buffer)
     	buffer = string.sub(buffer, self.CONSTANTS.HDR_OFFSET + 1)
@@ -37,6 +38,8 @@ local query = oop.subclass(message) {
 
     	buffer, self.m_qType = self:get16bits(buffer)
     	buffer, self.m_qClass = self:get16bits(buffer)
+
+    	self.data = ""
 	end,
 
 }
