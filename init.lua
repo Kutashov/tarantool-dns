@@ -12,11 +12,12 @@ local errno = require('errno')
 local expirationd = require('expirationd')
 
 local HOST = '127.0.0.1'
-local PORT = 3311
+--local PORT = 3311
+local PORT = 53
 
 box.cfg {
     log_level = 5,
-    slab_alloc_arena = 1,
+    slab_alloc_arena = 12,
     --     -- background = true,
     logger = '1.log'
 }
@@ -78,6 +79,8 @@ local function handle_message(s, msg)
 
     local m_query = query()
     m_query:decode(msg)
+
+    print(m_query.m_qName)
 
     local record = box.space.records:get{ m_query.m_qName, m_query.m_qType }
     if not record then

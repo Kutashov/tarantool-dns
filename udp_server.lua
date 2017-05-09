@@ -18,14 +18,14 @@ function udp_server_loop(s, handler)
             break
         elseif msg ~= nil then
             -- got a new datagram
-            log.info('handle msg')
+            -- log.info('handle msg')
             handler(s, peer, msg)
         else
             if s:errno() == errno.EAGAIN or s:errno() == errno.EINTR then
                 -- socket is not ready
-                log.info('Info not ready')
+                -- log.info('Info not ready')
                 s:readable() -- yield, epoll will wake us when new data arrives
-                log.info('Info ready')
+                -- log.info('Info ready')
             else
                 -- socket error
                 local msg = s:error()

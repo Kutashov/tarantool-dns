@@ -4,6 +4,8 @@ local logger = {}
 
 local file
 
+local working = false
+
 function open_logger()
     if not file then
         file = io.open("test.log", "a")
@@ -12,15 +14,21 @@ function open_logger()
 end
 
 function logger.trace(text)
-    open_logger()
-    io.write("\n ## " .. text)
-    io.flush()
+    if working then
+        open_logger()
+        io.write("\n ## " .. text)
+        io.flush()
+    end
+    
 end
 
 function logger.error(text)
-    open_logger()
-    io.write("\n !! " .. text)
-    io.flush()
+    if working then
+        open_logger()
+        io.write("\n !! " .. text)
+        io.flush()
+    end
+    
 end
 
 return logger

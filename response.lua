@@ -41,6 +41,8 @@ local response = oop.subclass(message) {
     	self:decode_hdr(buffer)
     	buffer = string.sub(buffer, self.CONSTANTS.HDR_OFFSET + 1)
 
+    	self:log_buffer(buffer, buffer:len())
+
     	--Question section
     	buffer = self:decode_qname(buffer)
     	buffer, self.m_qType = self:get16bits(buffer)
@@ -77,6 +79,7 @@ local response = oop.subclass(message) {
     	buffer, _ = self:get16bits(buffer)
     	buffer, ttl = self:get32bits(buffer)
     	buffer, rdLength = self:get16bits(buffer)
+
     	return string.sub(buffer, rdLength + 1), ttl
     end,
 

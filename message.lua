@@ -134,20 +134,34 @@ local message = oop.class {
         local result = nil
         local length = string.byte(buffer:sub(pos, pos))
 
+        ::ptrvalue::
         if length >= 192 then
+            -- first 2 bits are pointer mark, remaining are offset
             local offset = bit.band(bit.lshift(length, 8) + string.byte(buffer:sub(pos+1, pos+1)), 0x3FFF)
-            result = string.sub(buffer, pos + 2)
+            -- save result with buffer offset 
+            if not result then
+                result = string.sub(buffer, pos + 2)
+            end
+            
+            -- move to ptr value in original data
             buffer = string.sub(self.data, offset + 1)
+            pos = 1 -- if moved to ptr from a far pos
             length = string.byte(buffer:sub(pos, pos))
         end
-
+     
         while length ~= 0 do
             for i = 1, length do
                 pos = pos + 1
                 self.m_qName = self.m_qName .. buffer:sub(pos, pos)                 
             end
+            
             pos = pos + 1
             length = string.byte(buffer:sub(pos, pos))
+
+            if length >= 192 then
+                self.m_qName = self.m_qName .. '.'
+                goto ptrvalue
+            end
             if length ~= 0 then
                 self.m_qName = self.m_qName .. '.'
             end
