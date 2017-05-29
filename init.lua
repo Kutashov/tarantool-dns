@@ -10,6 +10,7 @@ local response = require('response')
 local socket = require('socket')
 local errno = require('errno')
 local expirationd = require('expirationd')
+local fiber = require('fiber')
 
 local HOST = '127.0.0.1'
 --local PORT = 3311
@@ -18,7 +19,7 @@ local PORT = 53
 box.cfg {
     log_level = 5,
     slab_alloc_arena = 12,
-    --     -- background = true,
+    -- background = true,
     logger = '1.log'
 }
 
@@ -30,20 +31,35 @@ if not box.space.records then
     s:create_index('primary',
         {type = 'HASH', parts = {1, 'string', 2, 'unsigned'}})
 
+    s:create_index('expire',
+        {type = 'TREE', unique = false, parts = {4, 'unsigned'}})
     -- box.schema.user.grant('guest','read,write,execute','universe')
 end
 
 
-local function is_expired(args, tuple) 
-    return tuple[4] + tuple[5] < os.time() 
-end
-function delete_tuple(space_id, args, tuple)
-    box.space[space_id]:delete({tuple[1], tuple[2]}) 
-end
-expirationd.start('clean_all', box.space.records.id, is_expired, {
-    process_expired_tuple = delete_tuple, args = nil,
-    tuples_per_iteration = 50, full_scan_time = 120
-})
+-- local function is_expired(args, tuple) 
+--     return tuple[4] < os.time() 
+-- end
+-- function delete_tuple(space_id, args, tuple)
+--     box.space[space_id]:delete({tuple[1], tuple[2]}) 
+-- end
+-- expirationd.start('clean_all', box.space.records.id, is_expired, {
+--     process_expired_tuple = delete_tuple, args = nil,
+--     tuples_per_iteration = 50, full_scan_time = 120
+-- })
+
+local expire_loop = fiber.create(
+    function()
+        local timeout = 1
+        while 0 == 0 do
+            local time = math.floor(fiber.time())
+            for _, tuple in box.space.records.index.expire:pairs(time, {iterator = 'LT'}) do
+                box.space.records:delete{tuple[1], tuple[2]}
+            end
+            fiber.sleep(timeout)
+        end
+    end
+)
 
 local function get_from_google(msg)
     local sock = socket('AF_INET', 'SOCK_DGRAM', 0)
@@ -87,7 +103,7 @@ local function handle_message(s, msg)
         local reply = get_from_google(msg)
         local m_response = response()
         local ttl = m_response:decode(reply)
-        box.space.records:insert{ m_query.m_qName, m_query.m_qType, reply, os.time(), ttl }
+        box.space.records:insert{ m_query.m_qName, m_query.m_qType, reply, os.time() + ttl, ttl }
 
         
         return reply
